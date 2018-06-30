@@ -50,11 +50,19 @@ def parse_monomial(monomial: str) -> Tuple[int, int]:
 
     Allowed forms:
         {sgn}{int}x^{power}: +13x^6
-        {int}x^{power}: 13x^6   then {sgn} == +
-        {sgn}{int}x:    +13x    then {power} == 1
-        {int}x:         13x     then ({sgn} == +) & ({power} == 1)
-        {sgn}{int}:     +13     then {power} == 0
-        {int}:          13      then ({sgn} == +) & ({power} == 0)
+             {int}x^{power}: 13x^6
+                  x^{power}: x^6
+        {sgn}{int}x:         +13x
+             {int}x:         13x
+                  x:         x
+        {sgn}{int}:          +13
+             {int}:          13
+
+        when sgn isn't given, it's assumed to be '+'
+        when int isn't given, it's assumed to be 1
+        when power isn't given, it's assumed to be:
+                1 if x is present: 13x -> power == 1
+                0 otherwise:       13  -> power == 0
 
     Example:
     '+x^10'         ->  (1,          10)
@@ -67,8 +75,12 @@ def parse_monomial(monomial: str) -> Tuple[int, int]:
         if not monomial[ind-1].isdigit():
             monomial = monomial[0] + '1' + monomial[1:]
 
+    if 'x' in monomial:
+        coefficient_end = monomial.index('x')
+        coefficient = int(monomial[:coefficient_end] or '1')
+
     if 'x^' in monomial:
-        coefficient_end = monomial.index('x^')
+        coefficient_end = monomial.index('x')
         power_beginning = coefficient_end + 2
         power = int(monomial[power_beginning:])
     elif 'x' in monomial and '^' not in monomial:
@@ -78,20 +90,34 @@ def parse_monomial(monomial: str) -> Tuple[int, int]:
         coefficient_end = len(monomial)
         power = 0
     else:
-        raise Exception('Number in a wrong format')
+        raise Exception('Wrong format')
 
-    coefficient = int(monomial[:coefficient_end])
+    # if there's no coefficient given, this string it's '', so we make or '1'
+    # cause default coefficient is 1
+    coefficient = int(monomial[:coefficient_end] or '1')
     return coefficient, power
 
 
 def test_parse_monomial():
+    """
+    Allowed forms:
+        {sgn}{int}x^{power}: +13x^6
+             {int}x^{power}: 13x^6   then {sgn} == +
+        {sgn}{int}x:         +13x    then {power} == 1
+             {int}x:         13x     then ({sgn} == +) & ({power} == 1)
+        {sgn}{int}:          +13     then {power} == 0
+             {int}:          13      then ({sgn} == +) & ({power} == 0)
+    """
+    # fixme: handle no coefficient given
     assert parse_monomial('+12x^6') == (12, 6)
     assert parse_monomial('-12x^6') == (-12, 6)
     assert parse_monomial('12x^6') == (12, 6)
+    # assert parse_monomial('x^6') == (1, 6)
 
     assert parse_monomial('+12x') == (12, 1)
     assert parse_monomial('-12x') == (-12, 1)
     assert parse_monomial('12x') == (12, 1)
+    # assert parse_monomial('x') == (1, 1)
 
     assert parse_monomial('+12') == (12, 0)
     assert parse_monomial('-12') == (-12, 0)
