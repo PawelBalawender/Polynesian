@@ -3,6 +3,22 @@
 """
 This module implements a translator from raw Polynomial <actual-zeros>, so the
 operations that we actually want to perform, to a correct Polynomial source code
+
+Let's suppose that we want to make a Polyonmial program that writes its input
+to standard output (CAT program):
+
+The zeros we want are, in order:
+    prog = 1+i, 5, 2i, i, 1+i, 6
+Now we apply convert() on them:
+    code = convert(prog)
+
+convert() firstly encodes its order in prime numbers:
+    prog = 1+2^1i, 3^5, 5^2i, 7^1i, 1+11^1i, 13^6
+Then adds complex conjugates since they also have to be zeros of this polynomial
+    prog = 1+2i, 1-2i, 243, 25i, -25i, 7i, -7i, 1+11i, 1-11i, 13^6
+Then calcualtes the polynomial from our zeros:
+    f(x) = (x - (1+2i))(x - (1-2i))(x - 243)...(x - 13^6)
+Formats it to a piece of correct Polynomial code and outputs
 """
 from typing import List, Generator, Union, NewType
 import math

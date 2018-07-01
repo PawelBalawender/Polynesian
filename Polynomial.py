@@ -2,6 +2,8 @@
 # -*- coding: UTF-8 -*-
 """
 This module implements an interpreter for the Polynomial esoteric language
+Save your correct Polynomial code as a string variable and apply convert()
+function on it
 """
 from collections import namedtuple
 from typing import List, Tuple, Generator, Union
