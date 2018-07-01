@@ -363,7 +363,40 @@ def translate_to_python(polynomial_code: List[complex]) -> str:
 
 
 def test_translate_to_python():
-    pass
+    # Hello, World!
+    code = [(72+1j), 1j, (29+1j), 1j, (7+1j), 1j, 1j,
+            (3+1j), 1j, (67+2j), 1j, (12+2j), 1j, (55+1j),
+            1j, (24+1j), 1j, (3+1j), 1j, (6+2j), 1j,
+            (8+2j), 1j, (67+2j), 1j]
+
+    pyth = """ACC = 0
+ACC += 72
+print(chr(ACC), end="")
+ACC += 29
+print(chr(ACC), end="")
+ACC += 7
+print(chr(ACC), end="")
+print(chr(ACC), end="")
+ACC += 3
+print(chr(ACC), end="")
+ACC -= 67
+print(chr(ACC), end="")
+ACC -= 12
+print(chr(ACC), end="")
+ACC += 55
+print(chr(ACC), end="")
+ACC += 24
+print(chr(ACC), end="")
+ACC += 3
+print(chr(ACC), end="")
+ACC -= 6
+print(chr(ACC), end="")
+ACC -= 8
+print(chr(ACC), end="")
+ACC -= 67
+print(chr(ACC), end="")
+"""
+    assert translate_to_python(code) == pyth
 
 
 def run_tests():
