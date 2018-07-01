@@ -139,11 +139,51 @@ def test_polynomial_to_string():
     assert polynomial_to_string(polynomial.c) == string
 
 
+def parse_source(source: str) -> Commands:
+    commands = []
+    for line in source.split('\n'):
+        events = line.split()
+        for i in events:
+            if i == '#':
+                break
+
+            try:
+                if i.strip():
+                    commands += [complex(i)]
+            except ValueError:
+                pass
+
+    return commands
+
+
+def test_parse_source():
+    source = """
+# This module implements a CAT program
+# pseudo-code:
+# <ACC := 0>
+# ACC++             {1+1j}
+# while ACC > 0{    {5}
+#   ACC = getchar() {2j}
+#   putchar(ACC)    {1j}
+#   ACC++           {1+1j}
+# }                 {6}
+
+1+1j
+5
+2j
+1j
+1+1j
+6
+"""
+    assert parse_source(source) == [1+1j, 5, 2j, 1j, 1+1j, 6]
+
+
 def run_tests():
     test_generate_primes()
     test_add_conjugates()
     test_add_primes()
     test_polynomial_to_string()
+    test_parse_source()
 
 
 def convert(commands: Commands) -> str:
@@ -163,6 +203,11 @@ if __name__ == '__main__':
     run_tests()
 
     # this program writes its input to standard output; CAT program
-    prog = [1+1j, 5, 2j, 1j, 1+1j, 6]
+    # prog = [1+1j, 5, 2j, 1j, 1+1j, 6]
+
+    with open('HelloWorld.pol') as doc:
+        code = doc.read()
+    prog = parse_source(code)
     pol = convert(prog)
-    print(Polynomial.convert(pol))
+    pyth = Polynomial.convert(pol)
+    exec(pyth)

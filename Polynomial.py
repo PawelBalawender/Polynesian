@@ -286,7 +286,8 @@ def get_actual_zeros(roots: Union[List[complex], np.ndarray]) -> List[complex]:
     for prime, lim in zip(prime_gen, range(len(roots))):
         for root in roots:
             operator = get_exponent(root, prime)
-            if math.isclose(operator, round(operator), rel_tol=1e-8):
+            if math.isclose(operator, round(operator),
+                            rel_tol=1e-6, abs_tol=1e-6):
                 operator = int(round(operator, 8))
 
                 # if root is complex, there is an operand; if it's a real
@@ -294,7 +295,8 @@ def get_actual_zeros(roots: Union[List[complex], np.ndarray]) -> List[complex]:
                 if root.imag:
                     operator = operator * 1j
                     operand = root.real
-                    if math.isclose(operand, round(operand), rel_tol=1e-8):
+                    if math.isclose(operand, round(operand),
+                                    rel_tol=1e-6, abs_tol=1e-6):
                         operand = int(round(operand, 8))
                 else:
                     operand = 0
@@ -348,13 +350,13 @@ def translate_to_python(polynomial_code: List[complex]) -> str:
             # i, 2i -> -i, -2i
             if cmd in {1j, 2j}:
                 cmd = -cmd
-            python_code += translations[cmd.imag * 1j].format(cmd.real)
+            python_code += translations[cmd.imag * 1j].format(int(cmd.real))
         elif not cmd.imag:
             if cmd in {1, 3, 4, 5, 7, 8}:
                 indent += 1
             elif cmd in {2, 6}:
                 indent -= 1
-            python_code += translations[cmd.real]
+            python_code += translations[int(cmd.real)]
 
         python_code += '\n'
     return python_code
@@ -382,13 +384,12 @@ def convert(source: str) -> str:
     :param source: correct Polynomial source code
     :return: correct Python source code
     """
-    return translate_to_python(
-        get_actual_zeros(
-            get_roots(
-                get_coefficients(
-                    parse_polynomial(
-                        source
-                    )))))
+    polynomial = parse_polynomial(source)
+    coefficients = get_coefficients(polynomial)
+    roots = get_roots(coefficients)
+    commands = get_actual_zeros(roots)
+    python = translate_to_python(commands)
+    return python
 
 if __name__ == '__main__':
     run_tests()
