@@ -1,4 +1,4 @@
-Polynomial is an esoteric programming language, see:
+Polynomial is an esoteric programming language, see:  
     https://esolangs.org/wiki/Polynomial
 
 This package contains:
