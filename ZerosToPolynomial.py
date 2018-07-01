@@ -205,7 +205,7 @@ if __name__ == '__main__':
     # this program writes its input to standard output; CAT program
     # prog = [1+1j, 5, 2j, 1j, 1+1j, 6]
 
-    with open('HelloWorld.pol') as doc:#
+    with open('HelloWorld.pol') as doc:
         code = doc.read()
     prog = parse_source(code)
     pol = convert(prog)
