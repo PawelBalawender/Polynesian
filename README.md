@@ -8,4 +8,4 @@ This package contains:\
 
 It's all written in Python because Python has NumPy\
 You can use it by passing your code/commands to string variables\
-at the end of modules (somewhere inside the if \__name__ == '\__main__' clause)
+at the end of modules (somewhere inside the if \_\_name__ == '\_\_main__' clause)
