@@ -8,6 +8,7 @@ function on it
 from collections import namedtuple
 from typing import List, Tuple, Generator, Union
 import math
+import sys
 
 import numpy as np
 
@@ -426,10 +427,12 @@ def convert(source: str) -> str:
 
 if __name__ == '__main__':
     run_tests()
+    if len(sys.argv) >= 2:
+        with open(sys.argv[1]) as doc:
+            prog = doc.read()
+    else:
+        # this program writes its input to std output; CAT program
+        prog = 'f(x) = x^10 - 4827056x^9 + 1192223600x^8 - 8577438158x^7 + 958436165464x^6 - 4037071023854x^5 + 141614997956730x^4 - 365830453724082x^3 + 5225367261446055x^2 - 9213984708801250x + 21911510628393750'
 
-    # this program writes its input to std output; CAT program
-    prog = 'f(x) = x^10 - 4827056x^9 + 1192223600x^8 - 8577438158x^7 + 958436165464x^6 - 4037071023854x^5 + 141614997956730x^4 - 365830453724082x^3 + 5225367261446055x^2 - 9213984708801250x + 21911510628393750'
-    # prog = 'f(x) = x^4 - 27x^3 + 59x^2 - 243x + 450'
     interpretable = convert(prog)
-
     print(interpretable)

@@ -22,6 +22,7 @@ Formats it to a piece of correct Polynomial code and outputs
 """
 from typing import List, Generator, Union, NewType
 import math
+import sys
 
 import numpy as np
 
@@ -202,12 +203,16 @@ def convert(commands: Commands) -> str:
 if __name__ == '__main__':
     run_tests()
 
+    if len(sys.argv) >= 2:
+        with open(sys.argv[1]) as doc:
+            code = doc.read()
+    else:
+        with open('HelloWorld.pol') as doc:
+            code = doc.read()
+
+    program = parse_source(code)
     # this program writes its input to standard output; CAT program
     # prog = [1+1j, 5, 2j, 1j, 1+1j, 6]
-
-    with open('HelloWorld.pol') as doc:
-        code = doc.read()
-    prog = parse_source(code)
-    pol = convert(prog)
-    pyth = Polynomial.convert(pol)
-    exec(pyth)
+    pol = convert(program)
+    interpretable = Polynomial.convert(pol)
+    print(interpretable)
