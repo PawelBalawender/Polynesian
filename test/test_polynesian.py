@@ -2,19 +2,67 @@
 # -*- coding: UTF-8 -*-
 """
 This module contains the test suites for the whole Polynomial package
-Use it by typing: python3 -m unittest TestPolynesian.py
+Use it by typing: python3 -m unittest test_polynesian.py
 """
+import builtins
 import unittest
+import pathlib
 import math
+import os.path
+import sys
 
 import numpy as np
 
-from PolynomialToPython import *
-from ZerosToPolynomial import *
-from Utilities import *
+sys.path.append('../src')
+
+from src.PolynomialToPython import *
+import src.PolynomialToPython as PolynomialToPython
+from src.ZerosToPython import *
+import src.ZerosToPython as ZerosToPython
+from src.Utilities import *
+
+file_path = pathlib.PurePath(__file__)
 
 
 class TestPolynomialToPython(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.zeros = file_path.with_name('zeros')
+        cls.polynomial = file_path.with_name('polynomial')
+        cls.python = file_path.with_name('python')
+        cls.old_open = open
+        cls.to_remove = []
+
+        def wrapped(*args, **kwargs):
+            if len(args) >= 2 and args[1] == 'w':
+                cls.to_remove.append(args[0])
+            return cls.old_open(*args, **kwargs)
+        builtins.open = wrapped
+
+    def tearDown(self):
+        [os.remove(i) for i in self.to_remove]
+        self.to_remove.clear()
+
+    def test_module_only_input_file(self):
+        path = PolynomialToPython.__file__
+        PolynomialToPython.main([path, self.polynomial])
+
+        new_file = self.polynomial.with_suffix('.py')
+        self.assertTrue(os.path.isfile(new_file))
+
+        with open(new_file) as fresh, open(self.python) as original:
+            self.assertEqual(fresh.read(), original.read())
+
+    def test_module_input_output(self):
+        path = PolynomialToPython.__file__
+        new_file = self.polynomial.with_name('xxx')
+        PolynomialToPython.main([path, self.polynomial, new_file])
+
+        self.assertTrue(os.path.isfile(new_file))
+
+        with open(new_file) as fresh, open(self.python) as original:
+            self.assertEqual(fresh.read(), original.read())
+
     def test_translate_to_python(self):
         # Hello, World!
         code = [(72+1j), 1j, (29+1j), 1j, (7+1j), 1j, 1j,
@@ -58,6 +106,7 @@ class TestPolynomialToPython(unittest.TestCase):
         assert get_actual_zeros(roots) == commands
 
     def test_get_exponent(self):
+        #assert math.isclose(get_exponent((-3) ** 5, 3), 5)
         assert math.isclose(get_exponent(2 ** 1, 2), 1)
         assert math.isclose(get_exponent(2 ** 4, 2), 4)
         assert math.isclose(get_exponent(2 ** 1.2, 2), 1.2)
@@ -131,17 +180,70 @@ class TestPolynomialToPython(unittest.TestCase):
 
 
 class TestZerosToPolynomial(unittest.TestCase):
-    def test_generate_primes(self):
-        prime_gen = generate_primes()
-        primes = [next(prime_gen) for _ in range(20)]
-        ok = [2,    3,  5,  7,  11, 13, 17, 19, 23, 29,
-              31,   37, 41, 43, 47, 53, 59, 61, 67, 71]
-        assert primes[:20] == ok
+    @classmethod
+    def setUpClass(cls):
+        cls.zeros = file_path.with_name('zeros')
+        cls.polynomial = file_path.with_name('polynomial')
+        cls.python = file_path.with_name('python')
+        cls.old_open = open
+        cls.to_remove = []
 
-        for _ in range(1000 - 20):
-            prime = next(prime_gen)
-        # prime No. 980 is 7919
-        assert prime == 7919
+        def wrapped(*args, **kwargs):
+            if len(args) >= 2 and args[1] == 'w':
+                cls.to_remove.append(args[0])
+            return cls.old_open(*args, **kwargs)
+        builtins.open = wrapped
+
+    def tearDown(self):
+        [os.remove(i) for i in self.to_remove]
+        self.to_remove.clear()
+
+    def test_module_only_input_file(self):
+        path = ZerosToPython.__file__
+        ZerosToPython.main([path, self.zeros])
+
+        new_file = self.zeros.with_suffix('.py')
+        self.assertTrue(os.path.isfile(new_file))
+
+        with open(new_file) as fresh, open(self.python) as original:
+            self.assertEqual(fresh.read(), original.read())
+
+    def test_module_input_output(self):
+        path = ZerosToPython.__file__
+        new_file = self.zeros.with_name('xxx')
+        ZerosToPython.main([path, self.zeros, new_file])
+
+        self.assertTrue(os.path.isfile(new_file))
+        with open(new_file) as fresh, open(self.python) as original:
+            self.assertEqual(fresh.read(), original.read())
+
+    def test_module_only_input_file_pol(self):
+        path = ZerosToPython.__file__
+        ZerosToPython.main([path, self.zeros, '-pol'])
+
+        new_file = self.zeros.with_suffix('.py')
+        self.assertTrue(os.path.isfile(new_file))
+        with open(new_file) as fresh, open(self.python) as original:
+            self.assertEqual(fresh.read(), original.read())
+
+        pol_file = self.zeros.with_suffix('.pol')
+        self.assertTrue(os.path.isfile(pol_file))
+        with open(pol_file) as fresh, open(self.polynomial) as original:
+            self.assertEqual(fresh.read(), original.read())
+
+    def test_module_input_output_pol(self):
+        new_file = self.zeros.with_name('xxx')
+        path = ZerosToPython.__file__
+        ZerosToPython.main([path, self.zeros, new_file, '-pol'])
+
+        self.assertTrue(os.path.isfile(new_file))
+        with open(new_file) as fresh, open(self.python) as original:
+            self.assertEqual(fresh.read(), original.read())
+
+        pol_file = new_file.with_suffix('.pol')
+        self.assertTrue(os.path.isfile(pol_file))
+        with open(pol_file) as fresh, open(self.polynomial) as original:
+            self.assertEqual(fresh.read(), original.read())
 
     def test_add_primes(self):
         # 1, i, 2 -> 2^1, 3^1i, 5^2 -> 2^1, 3^1i, -3^1i, 5^2

@@ -10,12 +10,16 @@ __all__ = ['Operation', 'get_roots', 'parse_monomial', 'parse_polynomial',
 
 from collections import namedtuple
 from typing import List, Tuple, Union
+import pathlib
 import math
 import sys
 
 import numpy as np
 
-from Utilities import generate_primes
+try:
+    import src.Utilities as Utilities
+except ModuleNotFoundError:
+    import Utilities
 
 Operation = namedtuple('Operation', ['operation', 'operand'])
 
@@ -80,8 +84,6 @@ def parse_monomial(monomial: str) -> Tuple[int, int]:
     elif 'x' not in monomial and '^' not in monomial:
         coefficient_end = len(monomial)
         power = 0
-    else:
-        raise Exception('Wrong format')
 
     # if there's no coefficient given, this string it's '', so we make or '1'
     # cause default coefficient is 1
@@ -153,8 +155,6 @@ def get_exponent(root: complex, prime: int) -> float:
         exp = -math.log(-root.real) / math.log(prime)
     elif not root.imag and root.real >= 0:
         exp = math.log(root.real) / math.log(prime)
-    else:
-        raise Exception()
     return exp
 
 
@@ -175,7 +175,7 @@ def get_actual_zeros(roots: Union[List[complex], np.ndarray]) -> List[complex]:
     # todo: we during every iteration calcualte log(prime)
     # todo: we could use NumPy to log() the whole array for efficiency
     # todo: why don't we make a generator from it?
-    prime_gen = generate_primes()
+    prime_gen = Utilities.generate_primes()
 
     commands = []
     for prime, lim in zip(prime_gen, range(len(roots))):
@@ -266,13 +266,21 @@ def convert(source: str) -> str:
     return python
 
 
-if __name__ == '__main__':
-    file = sys.argv[1] if len(sys.argv) >= 2 else 'cat.pol'
+def main(args: List[str]) -> None:
+    file_path = pathlib.PurePath(__file__)
+    cat = pathlib.Path.joinpath(file_path.parents[1], 'CAT.pol')
+    in_file = pathlib.PurePath(args[1]) if len(args) >= 2 else cat
+    out_file = args[2] if len(args) >= 3 else in_file.with_suffix('.py')
 
-    with open(file) as doc:
+    with open(in_file) as doc:
             lines = doc.readlines()
             # trim comments
             program = ''.join(i for i in lines if not i.startswith('#'))
 
-    interpretable = convert(program)
-    print(interpretable)
+    python_code = convert(program)
+    with open(out_file, 'w') as doc:
+        doc.write(python_code)
+
+
+if __name__ == '__main__':
+    main(sys.argv)

@@ -18,16 +18,24 @@ Then inserts complex conjugates since they also have to be zeros of this polynom
 Then calculates a polynomial which has our zeros and only our zeros
     polynomial_code = "f(x) = (x - (1+2i))(x - (1-2i))(x - 243)...(x - 13^6)"
 Formats it to a piece of correct Polynomial code and outputs
+
+todo: add the whole package test suite with some open() redirection etc.
 """
 __all__ = ['Commands', 'add_conjugates', 'add_primes', 'polynomial_to_string', 'parse_source']
 
 from typing import List, Union
+import pathlib
 import math
 import sys
 
 import numpy as np
 
-from Utilities import generate_primes
+try:
+    import src.PolynomialToPython as PolynomialToPython
+    import src.Utilities as Utilities
+except ModuleNotFoundError:
+    import PolynomialToPython
+    import Utilities
 
 Commands = List[Union[complex, int]]
 
@@ -57,7 +65,7 @@ def add_primes(commands: Commands) -> Commands:
     :param commands: original array of commands
     :return: encoded array of commands
     """
-    for i, prime in zip(range(len(commands)), generate_primes()):
+    for i, prime in zip(range(len(commands)), Utilities.generate_primes()):
         cmd = commands[i]
         if not cmd.imag:
             commands[i] = prime ** cmd.real
@@ -125,12 +133,37 @@ def convert(commands: Commands) -> str:
     return string
 
 
-if __name__ == '__main__':
-    file = sys.argv[1] if len(sys.argv) >= 2 else "HelloWorld.z"
+def main(args: List[str]) -> None:
+    pol_flag = '-pol' in args
+    if pol_flag:
+        args.remove('-pol')
 
-    with open(file) as doc:
+    file_path = pathlib.PurePath(__file__)
+
+    # defaults
+    in_file = pathlib.Path.joinpath(file_path.parents[1], 'test', 'zeros')
+
+    if len(args) >= 2:
+        in_file = pathlib.PurePath(args[1])
+    py_out_file = in_file.with_suffix('.py')
+    if len(args) >= 3:
+        py_out_file = pathlib.PurePath(args[2])
+
+    with open(in_file) as doc:
         _source = doc.read()
 
     zeros = parse_source(_source)
     polynomial_code = convert(zeros)
-    print(polynomial_code)
+
+    if pol_flag:
+        pol_out_file = py_out_file.with_suffix('.pol')
+        with open(pol_out_file, 'w') as doc:
+            doc.write(polynomial_code)
+
+    python_code = PolynomialToPython.convert(polynomial_code)
+    with open(py_out_file, 'w') as doc:
+        doc.write(python_code)
+
+
+if __name__ == '__main__':
+    main(sys.argv)
