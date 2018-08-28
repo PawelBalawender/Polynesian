@@ -1,64 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 """
-This module implements a translator from raw Polynomial <actual-zeros>, so the
-operations that we actually want to perform, to a correct Polynomial source code
+This module implements a translator from Polynomial "zeros" to a correct Polynomial source code
 
-Let's suppose that we want to make a Polyonmial program that writes its input
+Let's suppose that we want to make a Polynomial program that writes its input
 to standard output (CAT program):
 
 The zeros we want are, in order:
-    prog = 1+i, 5, 2i, i, 1+i, 6
+    zeros = 1+i, 5, 2i, i, 1+i, 6
 Now we apply convert() on them:
-    code = convert(prog)
+    polynomial_code = convert(zeros)
 
-convert() firstly encodes its order in prime numbers:
-    prog = 1+2^1i, 3^5, 5^2i, 7^1i, 1+11^1i, 13^6
-Then adds complex conjugates since they also have to be zeros of this polynomial
-    prog = 1+2i, 1-2i, 243, 25i, -25i, 7i, -7i, 1+11i, 1-11i, 13^6
-Then calcualtes the polynomial from our zeros:
-    f(x) = (x - (1+2i))(x - (1-2i))(x - 243)...(x - 13^6)
+convert() firstly encodes operations' order:
+    zeros = 1+2^1i, 3^5, 5^2i, 7^1i, 1+11^1i, 13^6
+Then inserts complex conjugates since they also have to be zeros of this polynomial
+    zeros = 1+2i, 1-2i, 243, 25i, -25i, 7i, -7i, 1+11i, 1-11i, 13^6
+Then calculates a polynomial which has our zeros and only our zeros
+    polynomial_code = "f(x) = (x - (1+2i))(x - (1-2i))(x - 243)...(x - 13^6)"
 Formats it to a piece of correct Polynomial code and outputs
 """
-from typing import List, Generator, Union, NewType
+__all__ = ['Commands', 'add_conjugates', 'add_primes', 'polynomial_to_string', 'parse_source']
+
+from typing import List, Union
 import math
 import sys
 
 import numpy as np
 
-import Polynomial
+from Utilities import generate_primes
 
-Commands = NewType('Commands', List[Union[complex, int]])
-
-
-def generate_primes() -> Generator[int, None, None]:
-    """
-    Yield consecutive prime numbers
-
-    :yields: next prime number
-    """
-    primes = {2}
-    yield 2
-
-    current = 3
-    while True:
-        if all(current % i for i in primes):
-            # nothing has divided our prime - it is a prime
-            primes.add(current)
-            yield current
-        current += 2  # omit even numbers
-
-
-def test_generate_primes():
-    prime_gen = generate_primes()
-    primes = [next(prime_gen) for _ in range(20)]
-    ok = [2,    3,  5,  7,  11, 13, 17, 19, 23, 29,
-          31,   37, 41, 43, 47, 53, 59, 61, 67, 71]
-    assert primes[:20] == ok
-
-    for _ in range(1000 - 20):
-        prime = next(prime_gen)
-    assert prime == 7919
+Commands = List[Union[complex, int]]
 
 
 def add_conjugates(commands: Commands) -> Commands:
@@ -78,15 +49,6 @@ def add_conjugates(commands: Commands) -> Commands:
     return commands
 
 
-def test_add_conjugates():
-    # Cat program:
-    commands = 1+1j, 5, 2j, 1j, 1+1j, 6
-    result = 1+1j, 1-1j, 5, 2j, -2j, 1j, -1j, 1+1j, 1-1j, 6
-    commands = list(map(complex, commands))
-    result = list(map(complex, result))
-    assert add_conjugates(commands) == result
-
-
 def add_primes(commands: Commands) -> Commands:
     """
     Encode order of commands by rising consecutive prime numbers to their power
@@ -104,13 +66,6 @@ def add_primes(commands: Commands) -> Commands:
     return commands
 
 
-def test_add_primes():
-    # 1, i, 2 -> 2^1, 3^1i, 5^2 -> 2^1, 3^1i, -3^1i, 5^2
-    commands = list(map(complex, [1, 1j, 2]))
-    result = list(map(complex, [2, 3j, 25]))
-    assert add_primes(commands) == result
-
-
 def polynomial_to_string(p: np.ndarray) -> str:
     """
     Create a string representing a polynomial just from its coefficients
@@ -120,7 +75,7 @@ def polynomial_to_string(p: np.ndarray) -> str:
     """
     string = 'f(x) = '
     for power, coefficient in reversed(list(enumerate(p[::-1]))):
-        sgn = ['-', '+'][coefficient > 0]
+        sgn = ['-', '+'][int(coefficient) > 0]
         string += f'{sgn} '
         if coefficient != 1:
             string += str(abs(int(coefficient)))
@@ -134,57 +89,26 @@ def polynomial_to_string(p: np.ndarray) -> str:
     return string
 
 
-def test_polynomial_to_string():
-    polynomial = np.poly1d([1, 2, 3, -4])
-    string = 'f(x) = x^3 + 2x^2 + 3x - 4'
-    assert polynomial_to_string(polynomial.c) == string
-
-
 def parse_source(source: str) -> Commands:
+    """
+    Extract zeros from a correct 'zeros' source code
+
+    :param source: source file containing zeros and comments
+    :return: zeros extracted from the source file, in order of occurence
+    """
     commands = []
-    for line in source.split('\n'):
+    for line in source.splitlines():
+        # line is in a form of e.g. "72+1j      # print 72"
         events = line.split()
         for i in events:
-            if i == '#':
-                break
-
+            # events is in a form of e.g. ['72+1j', '#', 'print', '72']
             try:
-                if i.strip():
-                    commands += [complex(i)]
+                commands.append(complex(i))
             except ValueError:
-                pass
+                if i == '#':
+                    break
 
     return commands
-
-
-def test_parse_source():
-    source = """
-# This module implements a CAT program
-# pseudo-code:
-# <ACC := 0>
-# ACC++             {1+1j}
-# while ACC > 0{    {5}
-#   ACC = getchar() {2j}
-#   putchar(ACC)    {1j}
-#   ACC++           {1+1j}
-# }                 {6}
-
-1+1j
-5
-2j
-1j
-1+1j
-6
-"""
-    assert parse_source(source) == [1+1j, 5, 2j, 1j, 1+1j, 6]
-
-
-def run_tests():
-    test_generate_primes()
-    test_add_conjugates()
-    test_add_primes()
-    test_polynomial_to_string()
-    test_parse_source()
 
 
 def convert(commands: Commands) -> str:
@@ -200,19 +124,13 @@ def convert(commands: Commands) -> str:
     string = polynomial_to_string(coefficients)
     return string
 
+
 if __name__ == '__main__':
-    run_tests()
+    file = sys.argv[1] if len(sys.argv) >= 2 else "HelloWorld.z"
 
-    if len(sys.argv) >= 2:
-        with open(sys.argv[1]) as doc:
-            code = doc.read()
-    else:
-        with open('HelloWorld.pol') as doc:
-            code = doc.read()
+    with open(file) as doc:
+        _source = doc.read()
 
-    program = parse_source(code)
-    # this program writes its input to standard output; CAT program
-    # prog = [1+1j, 5, 2j, 1j, 1+1j, 6]
-    pol = convert(program)
-    interpretable = Polynomial.convert(pol)
-    print(interpretable)
+    zeros = parse_source(_source)
+    polynomial_code = convert(zeros)
+    print(polynomial_code)

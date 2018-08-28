@@ -1,16 +1,21 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """
-This module implements an interpreter for the Polynomial esoteric language
+This module implements an translator for the Polynomial esoteric language
 Save your correct Polynomial code as a string variable and apply convert()
 function on it
 """
+__all__ = ['Operation', 'get_roots', 'parse_monomial', 'parse_polynomial',
+           'get_coefficients', 'get_exponent', 'get_actual_zeros', 'translate_to_python']
+
 from collections import namedtuple
-from typing import List, Tuple, Generator, Union
+from typing import List, Tuple, Union
 import math
 import sys
 
 import numpy as np
+
+from Utilities import generate_primes
 
 Operation = namedtuple('Operation', ['operation', 'operand'])
 
@@ -32,19 +37,6 @@ def get_roots(coefficients: List[int], tol=1e-11) -> np.ndarray:
         roots.imag[abs(roots.imag) < tol] = 0
     roots = roots[roots.imag >= 0]  # if b in (a+bi) < 0, it's a NOP for us
     return roots
-
-
-def test_get_roots():
-    # f(x) = (x - 1)(x + 7) = x2 + 7x - x - 7 = x2 + 6x - 7
-    # roots: 1, -7
-    np.testing.assert_array_almost_equal(
-        np.sort(get_roots([1, 6, -7])),
-        np.sort([-7, 1]))
-    # f(x) = (x - 1)(x - i)(x + i)(x - 2) = x4 -3x3 +3x2 -3x +2
-    # roots: 1, 2, -i, i
-    np.testing.assert_array_almost_equal(
-        np.sort(np.roots([1, -3, 3, -3, 2])),
-        np.sort([1, 2, -1j, 1j]))
 
 
 def parse_monomial(monomial: str) -> Tuple[int, int]:
@@ -78,10 +70,6 @@ def parse_monomial(monomial: str) -> Tuple[int, int]:
         if not monomial[ind-1].isdigit():
             monomial = monomial[0] + '1' + monomial[1:]
 
-    if 'x' in monomial:
-        coefficient_end = monomial.index('x')
-        coefficient = int(monomial[:coefficient_end] or '1')
-
     if 'x^' in monomial:
         coefficient_end = monomial.index('x')
         power_beginning = coefficient_end + 2
@@ -99,35 +87,6 @@ def parse_monomial(monomial: str) -> Tuple[int, int]:
     # cause default coefficient is 1
     coefficient = int(monomial[:coefficient_end] or '1')
     return coefficient, power
-
-
-def test_parse_monomial():
-    """
-    Allowed forms:
-        {sgn}{int}x^{power}: +13x^6
-             {int}x^{power}: 13x^6   then {sgn} == +
-        {sgn}{int}x:         +13x    then {power} == 1
-             {int}x:         13x     then ({sgn} == +) & ({power} == 1)
-        {sgn}{int}:          +13     then {power} == 0
-             {int}:          13      then ({sgn} == +) & ({power} == 0)
-    """
-    # fixme: handle no coefficient given
-    assert parse_monomial('+12x^6') == (12, 6)
-    assert parse_monomial('-12x^6') == (-12, 6)
-    assert parse_monomial('12x^6') == (12, 6)
-    # assert parse_monomial('x^6') == (1, 6)
-
-    assert parse_monomial('+12x') == (12, 1)
-    assert parse_monomial('-12x') == (-12, 1)
-    assert parse_monomial('12x') == (12, 1)
-    # assert parse_monomial('x') == (1, 1)
-
-    assert parse_monomial('+12') == (12, 0)
-    assert parse_monomial('-12') == (-12, 0)
-    assert parse_monomial('12') == (12, 0)
-
-    assert parse_monomial('+1x^1') == (1, 1)
-    assert parse_monomial('-1x^0') == (-1, 0)
 
 
 def parse_polynomial(polynomial: str) -> List[Tuple[int, int]]:
@@ -153,20 +112,6 @@ def parse_polynomial(polynomial: str) -> List[Tuple[int, int]]:
     return [parse_monomial(i) for i in merged]
 
 
-def test_parse_polynomial():
-    pol = 'f(x) = x^4 - 3x^2 + 2'
-    res = [(1, 4), (-3, 2), (2, 0)]
-    assert parse_polynomial(pol) == res
-
-    pol = 'f(x) = + x^6 - 3x^2'
-    res = [(1, 6), (-3, 2)]
-    assert parse_polynomial(pol) == res
-
-    pol = 'f(x) = - 171x^2 - 12x - 0'
-    res = [(-171, 2), (-12, 1), (0, 0)]
-    assert parse_polynomial(pol) == res
-
-
 def get_coefficients(pairs: List[Tuple[int, int]]) -> List[int]:
     """
     Take a sequence like [(coefficient, order)] and add missing elements
@@ -183,50 +128,6 @@ def get_coefficients(pairs: List[Tuple[int, int]]) -> List[int]:
     missing = set(range(order)) - powers
     [coefficients.insert(len(coefficients) - i, 0) for i in missing]
     return coefficients
-
-
-def test_fix_coefficients():
-    pairs = [(12, 4), (7, 2), (-2, 0)]
-    assert get_coefficients(pairs) == [12, 0, 7, 0, -2]
-
-    pairs = [(12, 100), (-2, 0)]
-    assert get_coefficients(pairs) == [12] + [0 for _ in range(99)] + [-2]
-
-    pairs = [(5, 3), (5, 2), (5, 1), (5, 0)]
-    assert get_coefficients(pairs) == [5, 5, 5, 5]
-
-    pairs = [(0, 1), (1, 0)]
-    assert get_coefficients(pairs) == [0, 1]
-
-
-def generate_primes() -> Generator[int, None, None]:
-    """
-    Yield consecutive prime numbers
-
-    :yields: next prime number
-    """
-    primes = {2}
-    yield 2
-
-    current = 3
-    while True:
-        if all(current % i for i in primes):
-            # nothing has divided our prime - it is a prime
-            primes.add(current)
-            yield current
-        current += 2  # omit even numbers
-
-
-def test_generate_primes():
-    prime_gen = generate_primes()
-    primes = [next(prime_gen) for _ in range(20)]
-    ok = [2,    3,  5,  7,  11, 13, 17, 19, 23, 29,
-          31,   37, 41, 43, 47, 53, 59, 61, 67, 71]
-    assert primes[:20] == ok
-
-    for _ in range(1000 - 20):
-        prime = next(prime_gen)
-    assert prime == 7919
 
 
 def get_exponent(root: complex, prime: int) -> float:
@@ -255,13 +156,6 @@ def get_exponent(root: complex, prime: int) -> float:
     else:
         raise Exception()
     return exp
-
-
-def test_get_exponent():
-    assert math.isclose(get_exponent(2 ** 1, 2), 1)
-    assert math.isclose(get_exponent(2 ** 4, 2), 4)
-    assert math.isclose(get_exponent(2 ** 1.2, 2), 1.2)
-    assert math.isclose(get_exponent(7 ** 11, 7), 11)
 
 
 def get_actual_zeros(roots: Union[List[complex], np.ndarray]) -> List[complex]:
@@ -303,12 +197,6 @@ def get_actual_zeros(roots: Union[List[complex], np.ndarray]) -> List[complex]:
                     operand = 0
                 commands += [complex(operand + operator)]
     return commands
-
-
-def test_get_actual_zeros():
-    roots = [4826809, 243, 25j, 1+11j, 7j, 1+2j]
-    commands = [1+1j, 5, 2j, 1j, 1+1j, 6]
-    assert get_actual_zeros(roots) == commands
 
 
 def translate_to_python(polynomial_code: List[complex]) -> str:
@@ -363,54 +251,6 @@ def translate_to_python(polynomial_code: List[complex]) -> str:
     return python_code
 
 
-def test_translate_to_python():
-    # Hello, World!
-    code = [(72+1j), 1j, (29+1j), 1j, (7+1j), 1j, 1j,
-            (3+1j), 1j, (67+2j), 1j, (12+2j), 1j, (55+1j),
-            1j, (24+1j), 1j, (3+1j), 1j, (6+2j), 1j,
-            (8+2j), 1j, (67+2j), 1j]
-
-    pyth = """ACC = 0
-ACC += 72
-print(chr(ACC), end="")
-ACC += 29
-print(chr(ACC), end="")
-ACC += 7
-print(chr(ACC), end="")
-print(chr(ACC), end="")
-ACC += 3
-print(chr(ACC), end="")
-ACC -= 67
-print(chr(ACC), end="")
-ACC -= 12
-print(chr(ACC), end="")
-ACC += 55
-print(chr(ACC), end="")
-ACC += 24
-print(chr(ACC), end="")
-ACC += 3
-print(chr(ACC), end="")
-ACC -= 6
-print(chr(ACC), end="")
-ACC -= 8
-print(chr(ACC), end="")
-ACC -= 67
-print(chr(ACC), end="")
-"""
-    assert translate_to_python(code) == pyth
-
-
-def run_tests():
-    test_get_roots()
-    test_parse_monomial()
-    test_parse_polynomial()
-    test_fix_coefficients()
-    test_generate_primes()
-    test_get_exponent()
-    test_get_actual_zeros()
-    test_translate_to_python()
-
-
 def convert(source: str) -> str:
     """
     Convert Polynomial source code to Python source code
@@ -425,14 +265,14 @@ def convert(source: str) -> str:
     python = translate_to_python(commands)
     return python
 
-if __name__ == '__main__':
-    run_tests()
-    if len(sys.argv) >= 2:
-        with open(sys.argv[1]) as doc:
-            prog = doc.read()
-    else:
-        # this program writes its input to std output; CAT program
-        prog = 'f(x) = x^10 - 4827056x^9 + 1192223600x^8 - 8577438158x^7 + 958436165464x^6 - 4037071023854x^5 + 141614997956730x^4 - 365830453724082x^3 + 5225367261446055x^2 - 9213984708801250x + 21911510628393750'
 
-    interpretable = convert(prog)
+if __name__ == '__main__':
+    file = sys.argv[1] if len(sys.argv) >= 2 else 'cat.pol'
+
+    with open(file) as doc:
+            lines = doc.readlines()
+            # trim comments
+            program = ''.join(i for i in lines if not i.startswith('#'))
+
+    interpretable = convert(program)
     print(interpretable)
