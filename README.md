@@ -31,3 +31,8 @@ From the projects's root directory
 # External libraries used
 - [NumPy](http://www.numpy.org/) (special credit! this tool wouldn't exist without NumPy's easiness of counting polynomials)
 - [Coverage.py](https://coverage.readthedocs.io/en/coverage-4.5.1a/#)
+
+# Todo
+Make 100% coverage
+Find redundant or invalid tests
+Update Usage and Run tests sections
