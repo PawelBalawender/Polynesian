@@ -13,13 +13,13 @@ import sys
 
 import numpy as np
 
-sys.path.append('../src')
+# sys.path.append('../src')
 
-from src.PolynomialToPython import *
-import src.PolynomialToPython as PolynomialToPython
-from src.ZerosToPython import *
-import src.ZerosToPython as ZerosToPython
-from src.Utilities import *
+from src.pol_to_py import *
+import src.pol_to_py as PolynomialToPython
+from src.zero_to_py import *
+import src.zero_to_py as ZerosToPython
+from src.utils import *
 
 file_path = pathlib.PurePath(__file__)
 
@@ -267,7 +267,7 @@ class TestZerosToPolynomial(unittest.TestCase):
                 #   putchar(ACC)    {1j}
                 #   ACC++           {1+1j}
                 # }                 {6}
-                
+
                 1+1j
                 5
                 2j

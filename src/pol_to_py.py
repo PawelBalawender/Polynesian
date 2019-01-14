@@ -17,9 +17,9 @@ import sys
 import numpy as np
 
 try:
-    import src.Utilities as Utilities
-except ModuleNotFoundError:
-    import Utilities
+    import src.utils as Utilities
+except ImportError:
+    import utils as Utilities
 
 Operation = namedtuple('Operation', ['operation', 'operand'])
 
