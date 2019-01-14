@@ -33,6 +33,9 @@ From the projects's root directory
 - [Coverage.py](https://coverage.readthedocs.io/en/coverage-4.5.1a/#)
 
 # Todo
+Add RaspberryPi support
+Add a Makefile for test running
 Make 100% coverage
 Find redundant or invalid tests
 Update Usage and Run tests sections
+
