@@ -1,5 +1,4 @@
-#!/usr/bin/env/python3
-# -*- coding: UTF-8 -*-
+#!/usr/bin/env python3
 """
 This module contains the test suites for the whole Polynomial package
 Use it by typing: python3 -m unittest test_polynesian.py
