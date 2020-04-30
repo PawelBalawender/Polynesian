@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
 """
 This module implements an translator for the Polynomial esoteric language
 Save your correct Polynomial code as a string variable and apply convert()
 function on it
 """
-__all__ = ['Operation', 'get_roots', 'parse_monomial', 'parse_polynomial',
-           'get_coefficients', 'get_exponent', 'get_actual_zeros', 'translate_to_python']
 
 from collections import namedtuple
 from typing import List, Tuple, Union
@@ -268,9 +265,8 @@ def convert(source: str) -> str:
 
 def main(args: List[str]) -> None:
     file_path = pathlib.PurePath(__file__)
-    cat = pathlib.Path.joinpath(file_path.parents[1], 'CAT.pol')
+    cat = pathlib.Path('test/CAT.py')
     in_file = pathlib.PurePath(args[1]) if len(args) >= 2 else cat
-    out_file = args[2] if len(args) >= 3 else in_file.with_suffix('.py')
 
     with open(in_file) as doc:
             lines = doc.readlines()
@@ -278,8 +274,7 @@ def main(args: List[str]) -> None:
             program = ''.join(i for i in lines if not i.startswith('#'))
 
     python_code = convert(program)
-    with open(out_file, 'w') as doc:
-        doc.write(python_code)
+    print(python_code)
 
 
 if __name__ == '__main__':
