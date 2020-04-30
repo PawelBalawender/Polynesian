@@ -15,11 +15,11 @@ import numpy as np
 
 # sys.path.append('../src')
 
-from src.pol_to_py import *
-import src.pol_to_py as PolynomialToPython
-from src.zero_to_py import *
-import src.zero_to_py as ZerosToPython
-from src.utils import *
+from polynomial_to_py import *
+import polynomial_to_py as PolynomialToPython
+from zero_to_py import *
+import zero_to_py as ZerosToPython
+from utils import *
 
 file_path = pathlib.PurePath(__file__)
 
