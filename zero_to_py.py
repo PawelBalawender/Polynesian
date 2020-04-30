@@ -137,7 +137,7 @@ def main(args: List[str]) -> None:
     file_path = pathlib.PurePath(__file__)
 
     # defaults
-    in_file = pathlib.Path.joinpath(file_path.parents[1], 'test', 'zeros')
+    in_file = pathlib.Path('test/hello.z')  # pathlib.Path.joinpath(file_path.parents[1], 'test', 'zeros')
 
     if len(args) >= 2:
         in_file = pathlib.PurePath(args[1])
@@ -153,12 +153,15 @@ def main(args: List[str]) -> None:
 
     if pol_flag:
         pol_out_file = py_out_file.with_suffix('.pol')
-        with open(pol_out_file, 'w') as doc:
-            doc.write(polynomial_code)
+        #with open(pol_out_file, 'w') as doc:
+        #    doc.write(polynomial_code)
+        print(polynomial_code)
+        return
 
     python_code = PolynomialToPython.convert(polynomial_code)
-    with open(py_out_file, 'w') as doc:
-        doc.write(python_code)
+    #with open(py_out_file, 'w') as doc:
+    #    doc.write(python_code)
+    print(python_code)
 
 
 if __name__ == '__main__':
