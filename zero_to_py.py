@@ -30,12 +30,8 @@ import sys
 
 import numpy as np
 
-try:
-    import src.PolynomialToPython as PolynomialToPython
-    import src.Utilities as Utilities
-except ModuleNotFoundError:
-    import PolynomialToPython
-    import Utilities
+import polynomial_to_py as PolynomialToPython
+import utils as Utilities
 
 Commands = List[Union[complex, int]]
 
